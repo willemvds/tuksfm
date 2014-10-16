@@ -1,5 +1,0 @@
-DRIVER = 'pymysql'
-HOST = 'localhost'
-USER = 'root'
-PASS = ''
-NAME = 'mydb'
