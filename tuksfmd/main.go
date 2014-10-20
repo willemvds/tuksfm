@@ -1,11 +1,14 @@
 package main
 
 import (
-	"os"
-	"io"
 	"encoding/gob"
 	"fmt"
+	"io"
+	"os"
 	"time"
+
+	"database/sql"
+	_ "github.com/lib/pq"
 
 	"github.com/willemvds/tuksfm"
 	"github.com/willemvds/tuksfm/webscraper"
@@ -22,7 +25,7 @@ func Persist(what interface{}, where io.Writer) error {
 
 type PersistJob struct {
 	filename string
-	data interface{}
+	data     interface{}
 }
 
 func NewPersistJob(filename string, data interface{}) *PersistJob {
@@ -80,10 +83,14 @@ func LoadData(artists *tuksfm.Artists, songs *tuksfm.Songs, playlist *tuksfm.Pla
 	return nil
 }
 
+func GetDbConn() (*sql.DB, error) {
+	return sql.Open("postgres", "user=tuks dbname=tuksfm sslmode=disable password=webd3v port=5434")
+}
+
 func main() {
-	var artists tuksfm.Artists
-	var songs tuksfm.Songs
-	var playlist tuksfm.Playlist
+	artists := make(tuksfm.Artists, 0)
+	songs := make(tuksfm.Songs, 0)
+	playlist := make(tuksfm.Playlist, 0)
 	err := LoadData(&artists, &songs, &playlist)
 	if err != nil {
 		fmt.Println("Failed to load data, start over...", err)
@@ -92,6 +99,10 @@ func main() {
 
 	pworker := NewPersistWorker()
 	pworker.Start()
+
+	dbconn, dberr := GetDbConn()
+	fmt.Println(dbconn)
+	fmt.Println(dberr)
 
 	for {
 		newArtists := false
@@ -107,12 +118,14 @@ func main() {
 				if artist == nil {
 					artist = &tuksfm.Artist{Name: websongs[i].Artist}
 					artists.Add(artist)
+					fmt.Println(artist.SaveToDB(dbconn))
 					newArtists = true
 				}
 				song := songs.Find(websongs[i].Name, artist)
 				if song == nil {
 					song = &tuksfm.Song{Name: websongs[i].Name, Artist: artist}
 					songs.Add(song)
+					fmt.Println(song.SaveToDB(dbconn))
 					newSongs = true
 				}
 				if song.Equals(playlist.Last()) {
@@ -120,8 +133,9 @@ func main() {
 				}
 				newstack = append(newstack, song)
 			}
-			for i := len(newstack)-1; i >= 0; i-- {
+			for i := len(newstack) - 1; i >= 0; i-- {
 				playlist.Add(newstack[i])
+				fmt.Println(playlist.SaveLastPlayToDB(dbconn))
 				newSongPlays = true
 				fmt.Println("Adding ", newstack[i])
 			}

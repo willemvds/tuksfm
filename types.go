@@ -1,12 +1,26 @@
 package tuksfm
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 )
 
 type Artist struct {
+	Id   int
 	Name string
+}
+
+func (a *Artist) SaveToDB(db *sql.DB) (int, error) {
+	var id int
+	if a.Id == 0 {
+		err := db.QueryRow(`INSERT INTO artist(name) VALUES($1) RETURNING id`, a.Name).Scan(&id)
+		if err != nil {
+			return 0, nil
+		}
+		a.Id = id
+	}
+	return id, nil
 }
 
 func (a *Artist) Equals(a2 *Artist) bool {
@@ -20,9 +34,22 @@ func (a *Artist) Equals(a2 *Artist) bool {
 }
 
 type Song struct {
+	Id int
 	*Artist
-	Name string
+	Name  string
 	Plays int
+}
+
+func (s *Song) SaveToDB(db *sql.DB) (int, error) {
+	var id int
+	if s.Id == 0 {
+		err := db.QueryRow(`INSERT INTO song(artist_id, name) VALUES($1, $2) RETURNING id`, s.Artist.Id, s.Name).Scan(&id)
+		if err != nil {
+			return 0, nil
+		}
+		s.Id = id
+	}
+	return id, nil
 }
 
 func (s Song) String() string {
@@ -70,6 +97,7 @@ func (s *Songs) Add(song *Song) {
 }
 
 type SongPlay struct {
+	Id int
 	*Song
 	AddTime time.Time
 }
@@ -88,3 +116,8 @@ func (pl Playlist) Last() *Song {
 	return nil
 }
 
+func (pl *Playlist) SaveLastPlayToDB(db *sql.DB) (int, error) {
+	var id int
+	err := db.QueryRow(`INSERT INTO playlist(song_id, time) VALUES($1, $2) RETURNING id`, []*SongPlay(*pl)[len([]*SongPlay(*pl))-1].Song.Id, time.Now()).Scan(&id)
+	return id, err
+}

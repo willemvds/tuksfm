@@ -10,7 +10,7 @@ import (
 const songListUrl = "http://tuksfm.co.za/Forms/SongList.aspx"
 
 type song struct {
-	Name string
+	Name   string
 	Artist string
 }
 
@@ -42,4 +42,3 @@ func GetSongList() ([]song, error) {
 	}
 	return parseHtml(html)
 }
-
