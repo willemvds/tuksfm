@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -83,11 +84,27 @@ func LoadData(artists *tuksfm.Artists, songs *tuksfm.Songs, playlist *tuksfm.Pla
 	return nil
 }
 
-func GetDbConn() (*sql.DB, error) {
-	return sql.Open("postgres", "user=tuks dbname=tuksfm sslmode=disable password=webd3v port=5434")
+func GetDbConn(host, port, user, pass, db string) (*sql.DB, error) {
+	return sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, pass, db))
+}
+
+var dbhost string
+var dbport string
+var dbname string
+var dbuser string
+var dbpass string
+
+func init() {
+	flag.StringVar(&dbhost, "host", "127.0.0.1", "host")
+	flag.StringVar(&dbport, "port", "5432", "port")
+	flag.StringVar(&dbname, "name", "tuksfm", "db name")
+	flag.StringVar(&dbuser, "user", "", "user")
+	flag.StringVar(&dbpass, "pass", "", "pass")
 }
 
 func main() {
+	flag.Parse()
+
 	artists := make(tuksfm.Artists, 0)
 	songs := make(tuksfm.Songs, 0)
 	playlist := make(tuksfm.Playlist, 0)
@@ -100,7 +117,7 @@ func main() {
 	pworker := NewPersistWorker()
 	pworker.Start()
 
-	dbconn, dberr := GetDbConn()
+	dbconn, dberr := GetDbConn(dbhost, dbport, dbuser, dbpass, dbname)
 	fmt.Println(dbconn)
 	fmt.Println(dberr)
 
