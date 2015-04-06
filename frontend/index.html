@@ -34,14 +34,13 @@
     </head>
     <body>
         <div id="divMain">
-            Hello from {{.greeting}}<br/>
+            Hello from {{.greeting}} <button id="btnRefresh">Refresh?</button><br/>
             <ul>
             {{ range .last10 }}<li>{{.}}</li>{{end}}
             </ul>
-            <button id="btnRefresh">Refresh?</button>
         </div>
         <div>
-            <input id="textSend" type="text" />
+            <input id="textSend" type="text" size="30" />
             <button id="btnSend">Send</button>
         </div>
         <div id="divFooter">
