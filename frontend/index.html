@@ -1,0 +1,30 @@
+{{define "ROOT"}}
+<html>
+    <head>
+        <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function(event) {
+            console.log(event);
+            docReady(event);
+        });
+
+        function docReady(ev) {
+            var btnRefresh = document.getElementById('btnRefresh');
+            btnRefresh.onclick = function() {
+                document.getElementById('divFooter').innerHTML += "No...<br/>";
+            }
+        }
+        </script>
+    </head>
+    <body>
+        <div id="divMain">
+            Hello from {{.greeting}}<br/>
+            <ul>
+            {{ range .last10 }}<li>{{.}}</li>{{end}}
+            </ul>
+            <button id="btnRefresh">Refresh?</button>
+        </div>
+        <div id="divFooter">
+        </div>
+    </body>
+</html>
+{{end}}
