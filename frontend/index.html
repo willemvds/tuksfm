@@ -2,6 +2,8 @@
 <html>
     <head>
         <script type="text/javascript">
+        var ws;
+
         document.addEventListener("DOMContentLoaded", function(event) {
             console.log(event);
             docReady(event);
@@ -11,6 +13,21 @@
             var btnRefresh = document.getElementById('btnRefresh');
             btnRefresh.onclick = function() {
                 document.getElementById('divFooter').innerHTML += "No...<br/>";
+            }
+
+            var btnSend = document.getElementById('btnSend');
+            btnSend.onclick = function() {
+                if (ws) {
+                    var textSend = document.getElementById('textSend');
+                    var text = textSend.value;
+                    ws.send(text);
+                    document.getElementById('divFooter').innerHTML += "[ws send] " + text + "<br/>";
+                }
+            }
+
+            ws = new WebSocket("ws://127.0.0.1:5000/ws");
+            ws.onmessage = function(event) {
+                document.getElementById('divFooter').innerHTML += "[ws recv] " + event.data + "<br/>";
             }
         }
         </script>
@@ -22,6 +39,10 @@
             {{ range .last10 }}<li>{{.}}</li>{{end}}
             </ul>
             <button id="btnRefresh">Refresh?</button>
+        </div>
+        <div>
+            <input id="textSend" type="text" />
+            <button id="btnSend">Send</button>
         </div>
         <div id="divFooter">
         </div>

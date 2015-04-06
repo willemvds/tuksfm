@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	textTemplate "text/template"
+
+	"golang.org/x/net/websocket"
 
 	"gopkg.in/fsnotify.v1"
 )
@@ -49,7 +52,7 @@ func IndexHandler(res http.ResponseWriter, req *http.Request) {
 	}
 	err = tmpl.ExecuteTemplate(res, "ROOT", map[string]interface{}{
 		"greeting": "Tuks Playlist",
-		"last10":   []string{
+		"last10": []string{
 			"Red Jumpsuit Apparatus - Guardian Angel",
 			"Red Jumpsuit Apparatus - Guardian Angel",
 			"Red Jumpsuit Apparatus - Guardian Angel",
@@ -65,6 +68,10 @@ func IndexHandler(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		log.Println("html template failure", err)
 	}
+}
+
+func EchoServer(ws *websocket.Conn) {
+	io.Copy(ws, ws)
 }
 
 func main() {
@@ -85,7 +92,7 @@ func main() {
 		err = watcher.Add(name)
 		if err != nil {
 			log.Println("add watch error:", err)
-		}		
+		}
 	}
 
 	go func() {
@@ -114,6 +121,9 @@ func main() {
 
 	http.HandleFunc("/", IndexHandler)
 	http.HandleFunc("/favicon.ico", http.NotFound)
+
+	http.Handle("/ws", websocket.Handler(EchoServer))
+
 	err = http.ListenAndServe(":5000", nil)
 	if err != nil {
 		log.Println(err)
